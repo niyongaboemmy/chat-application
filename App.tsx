@@ -1,21 +1,19 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { createStore, applyMiddleware } from "redux";
+import { Provider } from "react-redux";
+import { reducers } from "./src/reducers";
+import thunk from "redux-thunk";
+import { composeWithDevTools } from "redux-devtools-extension"; // redux-chrome-tool
+import AppScreen from "./src/containers/AppScreen/AppScreen";
 
 export default function App() {
+  const store = createStore(
+    reducers,
+    composeWithDevTools(applyMiddleware(thunk))
+  ); // redux-chrome-tool enabled
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Provider store={store}>
+      <AppScreen />
+    </Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
