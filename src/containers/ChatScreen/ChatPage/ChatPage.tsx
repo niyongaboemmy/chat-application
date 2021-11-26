@@ -4,17 +4,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import OctIcon from "react-native-vector-icons/Octicons";
 import FontIcon from "react-native-vector-icons/FontAwesome5";
-import AntIcon from "react-native-vector-icons/AntDesign";
-import axios from "axios";
-import { API } from "../../../utils/api";
 import { UserDetails } from "../../../actions/auth";
+import { ChatMessageInterface, UserChats } from "../ChatScreen";
 
 export interface userInterface {
   fname: string;
@@ -29,25 +27,32 @@ export interface userInterface {
 interface ChatPageProps {
   user: UserDetails | null;
   selectedUser: userInterface;
+  userChats: UserChats[];
   setSelectedUser: (user: userInterface | null) => void;
+  sendChatMessage: (chatMessage: ChatMessageInterface) => void;
 }
 const ChatPage = (props: ChatPageProps) => {
-  const [displaySearch, setDisplaySearch] = useState<boolean>(false);
-  const [userChats, setUserChats] = useState<any>(null);
-  const getUserChats = async (user_id: string) => {
-    try {
-      const res = await axios.get(`${API}/chats/userchats/${user_id}`);
-      setUserChats(res.data);
-      console.log("Chats: ", res.data);
-    } catch (error: any) {
-      console.log("Chats err: ", { ...error });
+  const [chatMessage, setChatMessage] = useState<string>("");
+  let UserChatGroup = props.userChats.find(
+    (itm) =>
+      props.user !== null &&
+      ((itm.sender_id.user_id === parseInt(props.user.user_id) &&
+        itm.receiver_id.user_id === props.selectedUser.user_id) ||
+        (itm.receiver_id.user_id === parseInt(props.user.user_id) &&
+          itm.sender_id.user_id === props.selectedUser.user_id))
+  );
+  const sendMessage = () => {
+    if (props.user !== null) {
+      let obj: ChatMessageInterface = {
+        chat_id: UserChatGroup === undefined ? "none" : UserChatGroup.chat_id,
+        sender_id: parseInt(props.user.user_id),
+        receiver_id: props.selectedUser.user_id,
+        message: chatMessage,
+      };
+      console.log("OBJ: ", obj);
+      props.sendChatMessage(obj);
     }
   };
-  useEffect(() => {
-    if (props.user !== null && userChats === null) {
-      getUserChats(props.user.user_id);
-    }
-  });
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -74,43 +79,55 @@ const ChatPage = (props: ChatPageProps) => {
           </View>
         </View>
       </View>
-      <View style={[tw`bg-blue-50 h-full px-4 py-4`, { flex: 1 }]}>
-        <View style={tw`mb-3`}>
-          <View style={tw`flex flex-col items-start`}>
-            {/* <FontIcon name="user-circle" size={30} color="#000" /> */}
-            <View style={tw`bg-blue-200 px-3 py-1 rounded-r-xl rounded-t-xl`}>
-              <Text style={tw`text-base font-bold text-gray-800`}>
-                Hello Emma
-              </Text>
+      <ScrollView
+        keyboardDismissMode="on-drag"
+        style={[tw`bg-blue-50 h-full px-4 py-4`, { flex: 1 }]}
+      >
+        {UserChatGroup === undefined ? (
+          <Text style={tw``}>No messages yet</Text>
+        ) : UserChatGroup.userChatText.length === 0 ? (
+          <Text style={tw``}>No messages yet</Text>
+        ) : (
+          props.user !== null &&
+          UserChatGroup.userChatText.map((item, i) => (
+            <View key={i + 1}>
+              {item.receiver === parseInt(props.user!.user_id) && (
+                <View style={tw`mb-3 mr-16`}>
+                  <View style={tw`flex flex-col items-start`}>
+                    {/* <FontIcon name="user-circle" size={30} color="#000" /> */}
+                    <View
+                      style={tw`bg-blue-200 px-3 py-1 rounded-r-xl rounded-t-xl`}
+                    >
+                      <Text style={tw`text-base font-bold text-gray-800`}>
+                        {item.text_message}
+                      </Text>
+                    </View>
+                    <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
+                      {item.date_sent}
+                    </Text>
+                  </View>
+                </View>
+              )}
+              {item.sender === parseInt(props.user!.user_id) && (
+                <View style={tw`mb-3 ml-16 flex items-end`}>
+                  <View style={tw`flex flex-col items-end`}>
+                    <View
+                      style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}
+                    >
+                      <Text style={tw`text-base font-bold text-white`}>
+                        {item.text_message}
+                      </Text>
+                    </View>
+                    <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
+                      {item.date_sent}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
-            <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
-              11:44 am
-            </Text>
-          </View>
-        </View>
-        <View style={tw`mb-3 flex items-end`}>
-          <View style={tw`flex flex-col items-end`}>
-            <View style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}>
-              <Text style={tw`text-base font-bold text-white`}>Hello Emma</Text>
-            </View>
-            <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
-              11:44 am
-            </Text>
-            {/* <FontIcon name="user-alt" size={30} color="#0c57ff" /> */}
-          </View>
-        </View>
-        <View style={tw`mb-3 flex items-end`}>
-          <View style={tw`flex flex-col items-end`}>
-            <View style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}>
-              <Text style={tw`text-base font-bold text-white`}>Hello Emma</Text>
-            </View>
-            <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
-              11:44 am
-            </Text>
-            {/* <FontIcon name="user-alt" size={30} color="#0c57ff" /> */}
-          </View>
-        </View>
-      </View>
+          ))
+        )}
+      </ScrollView>
       <View
         style={tw`bg-gray-200 px-2 py-2 flex flex-row items-center justify-between pb-4`}
       >
@@ -120,10 +137,22 @@ const ChatPage = (props: ChatPageProps) => {
             tw`border border-gray-300 rounded-full px-4 py-4 h-12 bg-white ml-3`,
             { width: "80%" },
           ]}
+          onChangeText={setChatMessage}
+          value={chatMessage}
         />
-        <View style={tw`bg-blue-600 px-2 py-2 rounded-full`}>
+        <TouchableOpacity
+          onPress={() => {
+            if (chatMessage !== "" && chatMessage.length > 0) {
+              sendMessage();
+              setChatMessage("");
+            } else {
+              alert("Fill text");
+            }
+          }}
+          style={tw`bg-blue-600 px-2 py-2 rounded-full`}
+        >
           <FontIcon name="paper-plane" size={26} color="#fff" />
-        </View>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );

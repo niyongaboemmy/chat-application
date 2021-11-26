@@ -6,6 +6,24 @@ import { APP_TOKEN_NAME, setAxiosToken } from "../utils/AxiosToken";
 import { ActionTypes } from "./types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export const RunWithAuthentication = async (MyFunction: Function) => {
+  let tokenName = null;
+  try {
+    const res_token = await AsyncStorage.getItem(APP_TOKEN_NAME);
+    tokenName = res_token;
+    var headers = {
+      "Content-Type": "application/json",
+      "x-auth-token": tokenName,
+    };
+    MyFunction({
+      headers: headers,
+    });
+  } catch (error) {}
+  if (tokenName === null) {
+    return false;
+  }
+};
+
 /**
  * * ****************************** INTERFACES *****************************
  */
@@ -90,7 +108,7 @@ export const FC_Login = (
       console.log("Login success: ", res.data.token);
     } catch (error: any) {
       console.log("Before...", { ...error });
-      if (error.response.data) {
+      if (error.response !== undefined) {
         console.log("Check one...");
 
         callback(false, {
@@ -105,8 +123,6 @@ export const FC_Login = (
           msg: "Error occurred, Please try again",
         });
       }
-
-      console.log("Err reg: ", { ...error });
     }
   };
 };
