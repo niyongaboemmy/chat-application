@@ -24,6 +24,11 @@ import { API } from "../../utils/api";
 import { errorToText } from "../../utils/errors";
 import uuid from "react-native-uuid";
 
+export enum UserCategoryInterface {
+  Normal = 2,
+  Admin = 1,
+}
+
 interface RegisterScreenContentProps {
   navigation: NativeStackNavigationProp<RouteParams>;
   route: RouteProp<RouteParams, keyof RouteParams>;
@@ -148,9 +153,8 @@ export class _RegisterScreenContent extends Component<
         },
       });
     }
-    console.log("IDDDD: ", uuid.v4());
     let data = {
-      user_category_id: uuid.v4(),
+      user_category_id: UserCategoryInterface.Normal,
       fname: this.state.first_name,
       lname: this.state.last_name,
       username: this.state.username,
@@ -233,11 +237,11 @@ export class _RegisterScreenContent extends Component<
                 </View>
                 <View>
                   <Text style={tw`text-base font-bold text-gray-600`}>
-                    Email | Phone
+                    Username
                   </Text>
                   <InputText
                     value={this.state.username}
-                    placeholder="Fill email or phone"
+                    placeholder="Fill username"
                     secureTextEntry={false}
                     onChange={this.setUsername}
                   />

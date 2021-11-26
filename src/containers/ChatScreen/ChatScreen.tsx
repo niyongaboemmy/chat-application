@@ -18,6 +18,8 @@ import Friends, { userInterface } from "./Friends/Friends";
 import ChatPage from "./ChatPage/ChatPage";
 import axios from "axios";
 import { API } from "../../utils/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { APP_TOKEN_NAME, setAxiosToken } from "../../utils/AxiosToken";
 
 interface ChatScreenProps {
   auth: Auth;
@@ -42,16 +44,27 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
     };
   }
   getUsers = async () => {
-    try {
-      this.setState({ loading: true });
-      const res = await axios.get<userInterface[]>(`${API}/users`);
-      // setUsers(res.data);
-      this.setState({ users: res.data });
-      this.setState({ loading: false });
-      console.log("Users: ", res.data);
-    } catch (error) {
-      this.setState({ loading: false });
-      console.log("Err: ", error);
+    if (this.props.auth.user !== null) {
+      try {
+        this.setState({ loading: true });
+        setAxiosToken();
+        const res = await axios.get<userInterface[]>(`${API}/users`);
+        // this.setState({
+        //   users: res.data.filter(
+        //     (itm) =>
+        //       this.props.auth.user !== null &&
+        //       itm.user_id !== parseInt(this.props.auth.user.user_id)
+        //   ),
+        // });
+        this.setState({
+          users: res.data,
+        });
+        this.setState({ loading: false });
+        console.log("Users: ", res.data);
+      } catch (error: any) {
+        this.setState({ loading: false });
+        console.log("Err users: ", { ...error });
+      }
     }
   };
   setSelectedUser = (user: userInterface | null) => {

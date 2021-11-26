@@ -135,11 +135,11 @@ export class _LoginScreenContent extends Component<
               <View style={tw`flex flex-col mt-5`}>
                 <View>
                   <Text style={tw`text-base font-bold text-gray-600`}>
-                    Email | Phone
+                    Username
                   </Text>
                   <InputText
                     value={this.state.username}
-                    placeholder="Fill email or phone"
+                    placeholder="Fill username"
                     secureTextEntry={false}
                     onChange={this.setUsername}
                   />

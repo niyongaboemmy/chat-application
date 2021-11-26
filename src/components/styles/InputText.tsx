@@ -19,7 +19,7 @@ const InputText = (props: InputTextProps) => {
         value={props.value}
         onChangeText={props.onChange}
         placeholder={props.placeholder}
-        returnKeyType="next"
+        returnKeyType="done"
         keyboardType={props.keyboardType}
         secureTextEntry={props.secureTextEntry}
         onFocus={() =>
