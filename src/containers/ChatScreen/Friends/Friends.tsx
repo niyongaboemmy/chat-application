@@ -3,16 +3,18 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import OctIcon from "react-native-vector-icons/Octicons";
-import FontIcon from "react-native-vector-icons/FontAwesome5";
 import AntIcon from "react-native-vector-icons/AntDesign";
+import MaterialIcon from "react-native-vector-icons/MaterialIcons";
+import EntypoIcon from "react-native-vector-icons/Entypo";
 import FriendItem from "./FriendItem";
 import axios from "axios";
 import { API } from "../../../utils/api";
+import Menus from "../../../components/Menus/Menus";
 
 export interface userInterface {
   fname: string;
@@ -32,24 +34,51 @@ interface FriendsProps {
 }
 const Friends = (props: FriendsProps) => {
   const [displaySearch, setDisplaySearch] = useState<boolean>(false);
+  const [displayMenus, setDisplayMenus] = useState<boolean>(false);
   return (
     <View>
+      {displayMenus === true && (
+        <Menus
+          menus={[
+            {
+              title: "Profile",
+              action: () => alert("Profile"),
+            },
+            {
+              title: "Logout",
+              action: () => props.logout(),
+            },
+          ]}
+          onClose={() => setDisplayMenus(false)}
+        />
+      )}
       <View style={tw`bg-blue-700 px-5 py-4 pt-16`}>
         <View style={tw`flex flex-row items-center justify-between`}>
           <View style={tw`flex flex-row items-center`}>
-            <TouchableOpacity onPress={() => props.logout()} style={tw`mr-4`}>
-              <OctIcon name="three-bars" size={40} color="#abbeff" />
-            </TouchableOpacity>
+            <View style={tw`mr-4`}>
+              <EntypoIcon name="users" size={35} color="#abbeff" />
+            </View>
             <View>
               <Text style={tw`text-white text-2xl font-bold`}>Friends</Text>
-              <Text style={tw`text-blue-300 -mt-1`}>
+              {/* <Text style={tw`text-blue-300 -mt-1`}>
                 Choose a friend to chat with
-              </Text>
+              </Text> */}
             </View>
           </View>
-          <TouchableOpacity onPress={() => setDisplaySearch(!displaySearch)}>
-            <AntIcon name="search1" size={30} color="#abbeff" />
-          </TouchableOpacity>
+          <View style={tw`flex flex-row items-center`}>
+            <TouchableOpacity
+              style={tw`flex flex-row items-center`}
+              onPress={() => setDisplaySearch(!displaySearch)}
+            >
+              <AntIcon name="search1" size={30} color="#abbeff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setDisplayMenus(true)}
+              style={tw`bg-blue-600 p-2 rounded-full ml-3 -mr-3`}
+            >
+              <MaterialIcon name="more-vert" size={30} color="#abbeff" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
       {displaySearch === true && (

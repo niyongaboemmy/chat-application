@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
-import OctIcon from "react-native-vector-icons/Octicons";
+import MaterialIcon from "react-native-vector-icons/MaterialIcons";
 import FontIcon from "react-native-vector-icons/FontAwesome5";
 import { UserDetails } from "../../../actions/auth";
 import { ChatMessageInterface, UserChats } from "../ChatScreen";
@@ -41,6 +41,10 @@ const ChatPage = (props: ChatPageProps) => {
         (itm.receiver_id.user_id === parseInt(props.user.user_id) &&
           itm.sender_id.user_id === props.selectedUser.user_id))
   );
+  const getTime = (thisDateTime: string) => {
+    let tempTime = new Date(thisDateTime);
+    return `${tempTime.getHours()}:${tempTime.getMinutes()}:${tempTime.getSeconds()}`;
+  };
   const sendMessage = () => {
     if (props.user !== null) {
       let obj: ChatMessageInterface = {
@@ -56,7 +60,7 @@ const ChatPage = (props: ChatPageProps) => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={tw`h-full`}
+      style={tw`h-full bg-white pb-10`}
     >
       <View style={tw`bg-blue-700 px-5 pl-0 py-2 pt-12`}>
         <View style={tw`flex flex-row items-center justify-between`}>
@@ -77,11 +81,17 @@ const ChatPage = (props: ChatPageProps) => {
               </Text>
             </View>
           </View>
+          <TouchableOpacity
+            style={tw`bg-blue-500 rounded-full p-2`}
+            onPress={() => alert("Encrypted")}
+          >
+            <MaterialIcon name="no-encryption" size={30} color="#abbeff" />
+          </TouchableOpacity>
         </View>
       </View>
       <ScrollView
         keyboardDismissMode="on-drag"
-        style={[tw`bg-blue-50 h-full px-4 py-4`, { flex: 1 }]}
+        style={[tw`bg-white h-full px-4 py-4`, { flex: 1 }]}
       >
         {UserChatGroup === undefined ? (
           <Text style={tw``}>No messages yet</Text>
@@ -103,7 +113,7 @@ const ChatPage = (props: ChatPageProps) => {
                       </Text>
                     </View>
                     <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
-                      {item.date_sent}
+                      {getTime(item.date_sent)}
                     </Text>
                   </View>
                 </View>
@@ -119,7 +129,7 @@ const ChatPage = (props: ChatPageProps) => {
                       </Text>
                     </View>
                     <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
-                      {item.date_sent}
+                      {getTime(item.date_sent)}
                     </Text>
                   </View>
                 </View>
