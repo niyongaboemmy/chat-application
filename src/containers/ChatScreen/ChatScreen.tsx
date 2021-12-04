@@ -122,8 +122,7 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
         this.setState({ loading: true });
         setAxiosToken();
         const res = await axios.post(`${API}/chats`, chatMessage);
-        RunWithAuthentication(this.getUserChats);
-        alert("Message sent!");
+        // RunWithAuthentication(this.getUserChats);
         this.setState({ loading: false });
         console.log("Sent msg: ", res.data);
       } catch (error: any) {
@@ -156,6 +155,8 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
             loading={this.state.loading}
             logout={this.props.FC_Logout}
             setSelectedUser={this.setSelectedUser}
+            userChats={this.state.userChats}
+            getUserChats={this.getUserChats}
           />
         ) : (
           <ChatPage
@@ -164,6 +165,7 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
             sendChatMessage={this.sendChatMessage}
             selectedUser={this.state.selectedUser}
             setSelectedUser={this.setSelectedUser}
+            getUserChats={this.getUserChats}
           />
         )}
       </View>

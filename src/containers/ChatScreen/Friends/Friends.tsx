@@ -15,6 +15,10 @@ import FriendItem from "./FriendItem";
 import axios from "axios";
 import { API } from "../../../utils/api";
 import Menus from "../../../components/Menus/Menus";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RouteParams } from "../../../components/Navigation/RootNavigator";
+import { UserChats } from "../ChatScreen";
 
 export interface userInterface {
   fname: string;
@@ -31,10 +35,13 @@ interface FriendsProps {
   loading: boolean;
   logout: () => void;
   setSelectedUser: (user: userInterface) => void;
+  userChats: UserChats[];
+  getUserChats: (headers: any) => void;
 }
 const Friends = (props: FriendsProps) => {
   const [displaySearch, setDisplaySearch] = useState<boolean>(false);
   const [displayMenus, setDisplayMenus] = useState<boolean>(false);
+  const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
   return (
     <View>
       {displayMenus === true && (
@@ -42,7 +49,10 @@ const Friends = (props: FriendsProps) => {
           menus={[
             {
               title: "Profile",
-              action: () => alert("Profile"),
+              action: () => {
+                setDisplayMenus(false);
+                navigation.navigate("Profile");
+              },
             },
             {
               title: "Logout",
@@ -104,6 +114,8 @@ const Friends = (props: FriendsProps) => {
               user={item}
               messages={0}
               onPress={(user: userInterface) => props.setSelectedUser(user)}
+              userChats={props.userChats}
+              getUserChats={props.getUserChats}
             />
           ))
         )}

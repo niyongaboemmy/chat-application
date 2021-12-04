@@ -9,6 +9,7 @@ import { StoreState } from "../../reducers";
 import { Auth } from "../../actions/auth";
 import { FC_Login, FC_CheckLoggedIn } from "../../actions";
 import { ChatScreen } from "../../containers/ChatScreen/ChatScreen";
+import { Profile } from "../../containers/Profile/Profile";
 
 export type RouteParams = {
   Home: undefined;
@@ -18,9 +19,10 @@ export type RouteParams = {
   };
   Register: undefined;
   ChatPage: undefined;
+  Profile: undefined;
 };
 
-interface RootNavigatorProps {
+export interface RootNavigatorProps {
   auth: Auth;
   FC_CheckLoggedIn: () => void;
 }
@@ -67,6 +69,15 @@ const _RootNavigator = (props: RootNavigatorProps) => {
           <Stack.Screen
             name="ChatPage"
             component={ChatScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+        )}
+        {props.auth.isAuthenticated === true && (
+          <Stack.Screen
+            name="Profile"
+            component={Profile}
             options={{
               headerShown: false,
             }}

@@ -1,13 +1,15 @@
 import { combineReducers } from "redux";
 import { authReducer } from "./auth";
 
-import { Auth } from "../actions";
+import { Auth, Socket } from "../actions";
+import { socketReducer } from "./socket";
 
-// define the entire state into the entire sire
 export interface StoreState {
   auth: Auth;
+  socket: Socket;
 }
 
 export const reducers = combineReducers<StoreState>({
   auth: authReducer,
+  socket: socketReducer,
 });

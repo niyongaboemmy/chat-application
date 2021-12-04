@@ -11,8 +11,20 @@ import {
 import tw from "tailwind-react-native-classnames";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
 import FontIcon from "react-native-vector-icons/FontAwesome5";
-import { UserDetails } from "../../../actions/auth";
+import { RunWithAuthentication, UserDetails } from "../../../actions/auth";
 import { ChatMessageInterface, UserChats } from "../ChatScreen";
+import { connect } from "react-redux";
+import { StoreState } from "../../../reducers";
+import { Auth } from "../../../actions/auth";
+import uuid from "react-native-uuid";
+import {
+  FC_Login,
+  FC_CheckLoggedIn,
+  Socket,
+  setNewConnection,
+} from "../../../actions";
+import { SOCKET_API } from "../../../utils/api";
+import { decrypt_message, encrypt_message } from "../../../utils/encrypt";
 
 export interface userInterface {
   fname: string;
@@ -30,10 +42,16 @@ interface ChatPageProps {
   userChats: UserChats[];
   setSelectedUser: (user: userInterface | null) => void;
   sendChatMessage: (chatMessage: ChatMessageInterface) => void;
+  auth: Auth;
+  socket: Socket;
+  getUserChats: (headers: any) => void;
 }
-const ChatPage = (props: ChatPageProps) => {
+const _ChatPage = (props: ChatPageProps) => {
   const [chatMessage, setChatMessage] = useState<string>("");
-  let UserChatGroup = props.userChats.find(
+  const [encrypted, setEncrypted] = useState<boolean>(false);
+  let default_uuid: string = uuid.v4().toString();
+  const [myChats, setMyChats] = useState<UserChats[]>(props.userChats);
+  let UserChatGroup = myChats.find(
     (itm) =>
       props.user !== null &&
       ((itm.sender_id.user_id === parseInt(props.user.user_id) &&
@@ -41,22 +59,115 @@ const ChatPage = (props: ChatPageProps) => {
         (itm.receiver_id.user_id === parseInt(props.user.user_id) &&
           itm.sender_id.user_id === props.selectedUser.user_id))
   );
+  const getMessages = (UserChatGroup: UserChats | undefined) => {
+    props.socket.socket.on("message", (id: any) => {
+      console.log("Get messages: ", id);
+      props.user &&
+        id.username !== "X-chat" &&
+        setMyChats([
+          ...(UserChatGroup === undefined
+            ? myChats
+            : myChats.filter((itm) => itm.chat_id !== UserChatGroup.chat_id)),
+          {
+            chat_id:
+              UserChatGroup === undefined
+                ? default_uuid
+                : UserChatGroup.chat_id,
+            date_created:
+              UserChatGroup === undefined
+                ? new Date().toString()
+                : UserChatGroup.date_created,
+            receiver_id:
+              UserChatGroup !== undefined
+                ? id.username === UserChatGroup.receiver_id.user_id
+                  ? UserChatGroup.receiver_id
+                  : UserChatGroup.sender_id
+                : {
+                    fname: props.selectedUser.fname,
+                    lname: props.selectedUser.lname,
+                    status: props.selectedUser.status,
+                    user_category: props.selectedUser.user_category,
+                    user_category_id: props.selectedUser.user_category_id,
+                    user_id: props.selectedUser.user_id,
+                    username: props.selectedUser.username,
+                  },
+            sender_id:
+              UserChatGroup !== undefined
+                ? id.username === UserChatGroup.sender_id.user_id
+                  ? UserChatGroup.sender_id
+                  : UserChatGroup.receiver_id
+                : {
+                    fname: props.user.fname,
+                    lname: props.user.lname,
+                    status: props.user.status,
+                    user_category: props.user.user_category,
+                    user_category_id: props.user.user_category_id,
+                    user_id: parseInt(props.user.user_id),
+                    username: props.user.username,
+                  },
+            status: UserChatGroup === undefined ? 1 : UserChatGroup.status,
+            userChatText: [
+              ...(UserChatGroup === undefined
+                ? []
+                : UserChatGroup.userChatText),
+              {
+                chat_id:
+                  UserChatGroup === undefined
+                    ? default_uuid
+                    : UserChatGroup.chat_id,
+                date_sent: new Date().toString(),
+                receiver:
+                  UserChatGroup !== undefined
+                    ? UserChatGroup.sender_id.user_id
+                    : props.selectedUser.user_id,
+                sender:
+                  UserChatGroup !== undefined
+                    ? UserChatGroup.receiver_id.user_id
+                    : parseInt(props.user.user_id),
+                status: 1,
+                text_chat_id:
+                  UserChatGroup !== undefined
+                    ? UserChatGroup.userChatText.length + 1
+                    : 1,
+                text_message: id.text,
+              },
+            ],
+          },
+        ]);
+    });
+  };
   const getTime = (thisDateTime: string) => {
     let tempTime = new Date(thisDateTime);
     return `${tempTime.getHours()}:${tempTime.getMinutes()}:${tempTime.getSeconds()}`;
   };
   const sendMessage = () => {
     if (props.user !== null) {
+      sendSocketMessage(encrypt_message(chatMessage));
+      getMessages(UserChatGroup);
       let obj: ChatMessageInterface = {
-        chat_id: UserChatGroup === undefined ? "none" : UserChatGroup.chat_id,
+        chat_id:
+          UserChatGroup === undefined ? default_uuid : UserChatGroup.chat_id,
         sender_id: parseInt(props.user.user_id),
         receiver_id: props.selectedUser.user_id,
-        message: chatMessage,
+        message: encrypt_message(chatMessage),
       };
       console.log("OBJ: ", obj);
       props.sendChatMessage(obj);
+      if (UserChatGroup === undefined) {
+        RunWithAuthentication(props.getUserChats);
+      }
+      default_uuid = uuid.v4().toString();
     }
   };
+
+  const sendSocketMessage = (message: string) => {
+    props.socket.socket.emit("message", message);
+    console.log("msg: ", message);
+  };
+
+  useEffect(() => {
+    getMessages(UserChatGroup);
+  });
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -83,9 +194,17 @@ const ChatPage = (props: ChatPageProps) => {
           </View>
           <TouchableOpacity
             style={tw`bg-blue-500 rounded-full p-2`}
-            onPress={() => alert("Encrypted")}
+            onPress={() => setEncrypted(!encrypted)}
           >
-            <MaterialIcon name="no-encryption" size={30} color="#abbeff" />
+            {encrypted === true ? (
+              <MaterialIcon name="no-encryption" size={30} color="#abbeff" />
+            ) : (
+              <MaterialIcon
+                name="enhanced-encryption"
+                size={30}
+                color="#abbeff"
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -109,11 +228,13 @@ const ChatPage = (props: ChatPageProps) => {
                       style={tw`bg-blue-200 px-3 py-1 rounded-r-xl rounded-t-xl`}
                     >
                       <Text style={tw`text-base font-bold text-gray-800`}>
-                        {item.text_message}
+                        {encrypted === true
+                          ? decrypt_message(item.text_message)
+                          : item.text_message}
                       </Text>
                     </View>
                     <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
-                      {getTime(item.date_sent)}
+                      {item.date_sent}
                     </Text>
                   </View>
                 </View>
@@ -125,7 +246,9 @@ const ChatPage = (props: ChatPageProps) => {
                       style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}
                     >
                       <Text style={tw`text-base font-bold text-white`}>
-                        {item.text_message}
+                        {encrypted === true
+                          ? decrypt_message(item.text_message)
+                          : item.text_message}
                       </Text>
                     </View>
                     <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
@@ -167,5 +290,24 @@ const ChatPage = (props: ChatPageProps) => {
     </KeyboardAvoidingView>
   );
 };
+
+const mapStateToProps = ({
+  auth,
+  socket,
+}: StoreState): {
+  auth: Auth;
+  socket: Socket;
+} => {
+  return {
+    auth: auth,
+    socket: socket,
+  };
+};
+
+const ChatPage = connect(mapStateToProps, {
+  FC_Login,
+  FC_CheckLoggedIn,
+  setNewConnection,
+})(_ChatPage);
 
 export default ChatPage;
