@@ -13,7 +13,7 @@ interface InputTextProps {
 const InputText = (props: InputTextProps) => {
   const [inputStyle, setInputStyle] = useState<string>("bg-gray-200");
   return (
-    <View>
+    <View style={tw`w-full`}>
       <TextInput
         style={tw`${inputStyle} px-6 rounded pb-2 text-base flex flex-col justify-center my-2 h-14`}
         value={props.value}
