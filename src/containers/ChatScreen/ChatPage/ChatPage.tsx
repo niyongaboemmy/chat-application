@@ -6,12 +6,13 @@ import {
   Platform,
   TextInput,
   TouchableOpacity,
-  FlatList,
   ScrollView,
+  Alert,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
 import FontIcon from "react-native-vector-icons/FontAwesome5";
+import AntIcon from "react-native-vector-icons/AntDesign";
 import {
   RunWithAuthentication,
   UserDetails,
@@ -21,21 +22,19 @@ import { ChatMessageInterface, UserChats } from "../ChatScreen";
 import { connect } from "react-redux";
 import { StoreState } from "../../../reducers";
 import { Auth } from "../../../actions/auth";
-import uuid from "react-native-uuid";
 import {
   FC_Login,
   FC_CheckLoggedIn,
   Socket,
   setNewConnection,
 } from "../../../actions";
-import { API, SOCKET_API } from "../../../utils/api";
+import { API } from "../../../utils/api";
 import { decrypt_message, encrypt_message } from "../../../utils/encrypt";
 import axios from "axios";
-import { errorToText } from "../../../utils/errors";
 import InputText from "../../../components/styles/InputText";
-import ButtonItem, {
-  ButtonThemes,
-} from "../../../components/styles/ButtonItem";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RouteParams } from "../../../components/Navigation/RootNavigator";
 
 export interface userInterface {
   fname: string;
@@ -69,7 +68,6 @@ interface ChatPageProps {
   loading: boolean;
 }
 const _ChatPage = (props: ChatPageProps) => {
-  let listViewRef;
   const [chatMessage, setChatMessage] = useState<string>("");
   const [encrypted, setEncrypted] = useState<boolean>(false);
   const [myChats, setMyChats] = useState<UserChats[]>(props.userChats);
@@ -77,6 +75,47 @@ const _ChatPage = (props: ChatPageProps) => {
   const [encryptPassword, setEncryptPassword] = useState<string>("");
   const [showEncryptPassword, setShowEncryptPassword] =
     useState<boolean>(false);
+  const [deleteSelected, setDeleteSelected] = useState<string>("");
+
+  const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
+
+  const deleteTextMessage = () => {
+    return Alert.alert(
+      "Are your sure?",
+      "Are you sure you want to remove this beautiful box?",
+      [
+        // The "Yes" button
+        {
+          text: "Yes",
+          onPress: () => {
+            deleteTextMessageConfirm();
+          },
+        },
+        // The "No" button
+        // Does nothing but dismiss the dialog when tapped
+        {
+          text: "No",
+        },
+      ]
+    );
+  };
+
+  const deleteTextMessageConfirm = async () => {
+    if (deleteSelected !== "") {
+      setLoading(true);
+      try {
+        const res = await axios.delete(
+          `${API}/chats/textchat/${deleteSelected}`
+        );
+        alert("deleted successfully!");
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+      }
+      props.setSelectedUser(null);
+      RunWithAuthentication(props.getUserChats);
+    }
+  };
 
   const confirmEncryption = async (status: boolean, password: string) => {
     if (props.auth.user !== null && password !== "" && password !== null) {
@@ -306,8 +345,17 @@ const _ChatPage = (props: ChatPageProps) => {
               UserChatGroup.userChatText.map((item, i) => (
                 <View key={i + 1}>
                   {item.receiver === parseInt(props.user!.user_id) && (
-                    <View style={tw`mb-3 mr-16`}>
-                      <View style={tw`flex flex-col items-start`}>
+                    <View
+                      style={tw`mb-3 mr-16 flex flex-row justify-start items-center`}
+                    >
+                      <TouchableOpacity
+                        onPress={() =>
+                          parseInt(deleteSelected) === item.text_chat_id
+                            ? setDeleteSelected("")
+                            : setDeleteSelected(item.text_chat_id.toString())
+                        }
+                        style={tw`flex flex-col items-start`}
+                      >
                         {/* <FontIcon name="user-circle" size={30} color="#000" /> */}
                         <View
                           style={tw`bg-blue-200 px-3 py-1 rounded-r-xl rounded-t-xl`}
@@ -321,12 +369,29 @@ const _ChatPage = (props: ChatPageProps) => {
                         <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
                           {getTime(item.date_sent)}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
+                      {parseInt(deleteSelected) === item.text_chat_id && (
+                        <TouchableOpacity
+                          onPress={() => deleteTextMessage()}
+                          style={tw`bg-red-50 rounded-full px-1 py-1 ml-3`}
+                        >
+                          <AntIcon name="delete" size={20} color="#eb2525" />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   )}
                   {item.sender === parseInt(props.user!.user_id) && (
-                    <View style={tw`mb-3 ml-16 flex items-end`}>
-                      <View style={tw`flex flex-col items-end`}>
+                    <View
+                      style={tw`mb-3 ml-16 flex flex-row justify-end items-center`}
+                    >
+                      <TouchableOpacity
+                        onPress={() =>
+                          parseInt(deleteSelected) === item.text_chat_id
+                            ? setDeleteSelected("")
+                            : setDeleteSelected(item.text_chat_id.toString())
+                        }
+                        style={tw`flex flex-col items-end`}
+                      >
                         <View
                           style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}
                         >
@@ -339,13 +404,21 @@ const _ChatPage = (props: ChatPageProps) => {
                         <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
                           {getTime(item.date_sent)}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
+                      {parseInt(deleteSelected) === item.text_chat_id && (
+                        <TouchableOpacity
+                          onPress={() => deleteTextMessage()}
+                          style={tw`bg-red-50 rounded-full px-1 py-1 ml-3`}
+                        >
+                          <AntIcon name="delete" size={20} color="#eb2525" />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   )}
                 </View>
               ))
             )}
-            {props.loading === true && (
+            {(props.loading === true || loading === true) && (
               <View>
                 <Text style={tw`text-yellow-700 font-bold text-xl text-center`}>
                   Loading...
