@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
 import { connect } from "react-redux";
 import { StoreState } from "../../reducers";
 import { Auth } from "../../actions/auth";
@@ -21,8 +27,15 @@ interface ProfileProps {
 const _Profile = (props: ProfileProps) => {
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
   return (
-    <View>
-      <View style={tw`bg-blue-700 px-5 py-4 pt-16`}>
+    <SafeAreaView style={tw`h-full bg-blue-700`}>
+      <StatusBar
+        animated={true}
+        backgroundColor="#1d4ed8"
+        barStyle="light-content"
+        showHideTransition="fade"
+        hidden={false}
+      />
+      <View style={tw`bg-blue-700 px-5 py-4`}>
         <View style={tw`flex flex-row items-center justify-between`}>
           <View style={tw`flex flex-row items-center`}>
             <TouchableOpacity
@@ -38,23 +51,38 @@ const _Profile = (props: ProfileProps) => {
               </Text> */}
             </View>
           </View>
-          <View style={tw`flex flex-row items-center`}>
-            <TouchableOpacity
-              style={tw`flex flex-row items-center`}
-              onPress={() => alert("Hello")}
-            >
-              {/* <AntIcon name="search1" size={30} color="#abbeff" /> */}
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => alert("Hello")}
-              style={tw`bg-blue-600 p-2 rounded-full ml-3 -mr-3`}
-            >
-              {/* <MaterialIcon name="more-vert" size={30} color="#abbeff" /> */}
-            </TouchableOpacity>
-          </View>
+          <View style={tw`flex flex-row items-center`}></View>
         </View>
       </View>
-    </View>
+      <View style={tw`bg-white h-full`}>
+        <View
+          style={tw`flex flex-row items-center justify-between mx-3 py-4 border-b border-gray-300`}
+        >
+          <Text style={tw`text-lg text-gray-500 mr-4`}>First name:</Text>
+          <Text style={tw`font-bold text-lg`}>{props.auth.user?.fname}</Text>
+        </View>
+        <View
+          style={tw`flex flex-row items-center justify-between mx-3 py-4 border-b border-gray-300`}
+        >
+          <Text style={tw`text-lg text-gray-500 mr-4`}>Last name:</Text>
+          <Text style={tw`font-bold text-lg`}>{props.auth.user?.lname}</Text>
+        </View>
+        <View
+          style={tw`flex flex-row items-center justify-between mx-3 py-4 border-b border-gray-300`}
+        >
+          <Text style={tw`text-lg text-gray-500 mr-4`}>Username:</Text>
+          <Text style={tw`font-bold text-lg`}>{props.auth.user?.fname}</Text>
+        </View>
+        <View
+          style={tw`flex flex-row items-center justify-between mx-3 py-4 border-b border-gray-300`}
+        >
+          <Text style={tw`text-lg text-gray-500 mr-4`}>Account category:</Text>
+          <Text style={tw`font-bold text-lg capitalize`}>
+            {props.auth.user?.user_category}
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 

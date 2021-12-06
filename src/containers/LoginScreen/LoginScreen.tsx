@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  StatusBar,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { RouteParams } from "../../components/Navigation/RootNavigator";
@@ -118,6 +119,13 @@ export class _LoginScreenContent extends Component<
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <SafeAreaView style={tw`h-full bg-white`}>
+          <StatusBar
+            animated={true}
+            backgroundColor="#fff"
+            barStyle="dark-content"
+            showHideTransition="fade"
+            hidden={false}
+          />
           <ScrollView>
             <PublicHeader />
             <View style={tw`px-4`}>

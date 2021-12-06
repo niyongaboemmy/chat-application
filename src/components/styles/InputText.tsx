@@ -15,7 +15,7 @@ const InputText = (props: InputTextProps) => {
   return (
     <View style={tw`w-full`}>
       <TextInput
-        style={tw`${inputStyle} px-6 rounded pb-2 text-base flex flex-col justify-center my-2 h-14`}
+        style={tw`${inputStyle} px-6 rounded pb-2 text-base flex flex-col justify-center my-2 h-14 text-gray-700`}
         value={props.value}
         onChangeText={props.onChange}
         placeholder={props.placeholder}

@@ -11,16 +11,15 @@ import { connect } from "react-redux";
 import { StoreState } from "../../reducers";
 import { Auth, RunWithAuthentication } from "../../actions/auth";
 import { FC_Login, FC_Logout } from "../../actions";
-import tw from "tailwind-react-native-classnames";
-import ButtonItem, { ButtonThemes } from "../../components/styles/ButtonItem";
-import Alert, { AlertThemes } from "../../components/Alert/Alert";
 import Friends, { userInterface } from "./Friends/Friends";
 import ChatPage from "./ChatPage/ChatPage";
 import axios from "axios";
 import { API } from "../../utils/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { APP_TOKEN_NAME, setAxiosToken } from "../../utils/AxiosToken";
-import { UserCategoryInterface } from "../RegisterScreen/RegisterScreen";
+import { setAxiosToken } from "../../utils/AxiosToken";
+import uuid from "react-native-uuid";
+import tw from "tailwind-react-native-classnames";
+
+const default_uuid: string = uuid.v4().toString();
 
 export interface UserChats {
   chat_id: string;
@@ -72,6 +71,23 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
       authToken: null,
     };
   }
+
+  UserChatGroup = () => {
+    let temp = this.state.userChats.find(
+      (itm) =>
+        this.props.auth.user !== null &&
+        this.state.selectedUser !== null &&
+        ((itm.sender_id.user_id === parseInt(this.props.auth.user.user_id) &&
+          itm.receiver_id.user_id === this.state.selectedUser.user_id) ||
+          (itm.receiver_id.user_id === parseInt(this.props.auth.user.user_id) &&
+            itm.sender_id.user_id === this.state.selectedUser.user_id))
+    );
+    if (temp !== undefined) {
+      return temp.chat_id;
+    } else {
+      return uuid.v4().toString();
+    }
+  };
 
   getUsers = async (headers: any) => {
     if (this.props.auth.user !== null) {
@@ -137,14 +153,16 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
   };
   componentDidMount = () => {
     RunWithAuthentication(this.getUsers);
-    RunWithAuthentication(this.getUserChats);
+    if (this.state.userChats.length === 0) {
+      RunWithAuthentication(this.getUserChats);
+    }
   };
   render() {
     return (
-      <View>
+      <SafeAreaView style={tw`bg-blue-700`}>
         <StatusBar
           animated={true}
-          backgroundColor="#fff"
+          backgroundColor="#1d4ed8"
           barStyle="light-content"
           showHideTransition="fade"
           hidden={false}
@@ -157,18 +175,22 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
             setSelectedUser={this.setSelectedUser}
             userChats={this.state.userChats}
             getUserChats={this.getUserChats}
+            UserChatGroup={this.UserChatGroup}
+            getUsers={this.getUsers}
           />
         ) : (
           <ChatPage
             user={this.props.auth.user}
+            UserChatGroup={this.UserChatGroup}
             userChats={this.state.userChats}
             sendChatMessage={this.sendChatMessage}
             selectedUser={this.state.selectedUser}
             setSelectedUser={this.setSelectedUser}
             getUserChats={this.getUserChats}
+            loading={this.state.loading}
           />
         )}
-      </View>
+      </SafeAreaView>
     );
   }
 }

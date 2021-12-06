@@ -4,9 +4,10 @@ import {
   Text,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   TextInput,
   TouchableOpacity,
+  FlatList,
+  ScrollView,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
@@ -64,11 +65,13 @@ interface ChatPageProps {
   auth: Auth;
   socket: Socket;
   getUserChats: (headers: any) => void;
+  UserChatGroup: Function;
+  loading: boolean;
 }
 const _ChatPage = (props: ChatPageProps) => {
+  let listViewRef;
   const [chatMessage, setChatMessage] = useState<string>("");
   const [encrypted, setEncrypted] = useState<boolean>(false);
-  let default_uuid: string = uuid.v4().toString();
   const [myChats, setMyChats] = useState<UserChats[]>(props.userChats);
   const [loading, setLoading] = useState<boolean>(false);
   const [encryptPassword, setEncryptPassword] = useState<string>("");
@@ -113,7 +116,7 @@ const _ChatPage = (props: ChatPageProps) => {
   );
   const getMessages = (UserChatGroup: UserChats | undefined) => {
     props.socket.socket.on("message", (message: SocketMessage | "Welcome") => {
-      console.log("Get messages: ", message);
+      // console.log("Get messages: ", message);
       props.user &&
         message !== "Welcome" &&
         setMyChats([
@@ -123,7 +126,7 @@ const _ChatPage = (props: ChatPageProps) => {
           {
             chat_id:
               UserChatGroup === undefined
-                ? default_uuid
+                ? props.UserChatGroup()
                 : UserChatGroup.chat_id,
             date_created:
               UserChatGroup === undefined
@@ -165,7 +168,7 @@ const _ChatPage = (props: ChatPageProps) => {
               {
                 chat_id:
                   UserChatGroup === undefined
-                    ? default_uuid
+                    ? props.UserChatGroup()
                     : UserChatGroup.chat_id,
                 date_sent: new Date().toString(),
                 receiver: message.text.receiver,
@@ -200,17 +203,16 @@ const _ChatPage = (props: ChatPageProps) => {
       getMessages(UserChatGroup);
       let obj: ChatMessageInterface = {
         chat_id:
-          UserChatGroup === undefined ? default_uuid : UserChatGroup.chat_id,
+          UserChatGroup === undefined
+            ? props.UserChatGroup()
+            : UserChatGroup.chat_id,
         sender_id: parseInt(props.user.user_id),
         receiver_id: props.selectedUser.user_id,
         message: encrypt_message(chatMessage),
       };
       console.log("OBJ: ", obj);
       props.sendChatMessage(obj);
-      if (UserChatGroup === undefined) {
-        RunWithAuthentication(props.getUserChats);
-      }
-      default_uuid = uuid.v4().toString();
+      RunWithAuthentication(props.getUserChats);
     }
   };
 
@@ -227,146 +229,158 @@ const _ChatPage = (props: ChatPageProps) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={tw`h-full bg-white pb-10`}
     >
-      <View style={tw`bg-blue-700 px-5 pl-0 py-2 pt-12`}>
-        <View style={tw`flex flex-row items-center justify-between`}>
-          <View style={tw`flex flex-row items-center`}>
-            <TouchableOpacity
-              onPress={() => props.setSelectedUser(null)}
-              style={tw`flex flex-row pr-3 py-5 pl-5`}
-            >
-              <FontIcon name="arrow-left" size={30} color="#d1d1d1" />
-            </TouchableOpacity>
-            {/* <FontIcon name="user-alt" size={30} color="#d1d1d1" /> */}
-            <View style={tw`ml-2`}>
-              <Text style={tw`text-white text-2xl font-bold`}>
-                {props.selectedUser.username}
-              </Text>
-              <Text style={tw`text-blue-300 -mt-1`}>
-                {props.selectedUser.fname} {props.selectedUser.lname}
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={tw`bg-blue-500 rounded-full p-2`}
-            onPress={() => setShowEncryptPassword(!showEncryptPassword)}
-          >
-            {encrypted === true ? (
-              <MaterialIcon name="no-encryption" size={30} color="#abbeff" />
-            ) : (
-              <MaterialIcon
-                name="enhanced-encryption"
-                size={30}
-                color="#abbeff"
-              />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-      {showEncryptPassword === true && (
-        <View style={tw`px-3 py-3`}>
-          <View
-            style={tw`bg-white flex flex-col items-end justify-end w-full p-3 border-2 border-blue-600 rounded shadow-xl`}
-          >
-            <InputText
-              value={encryptPassword}
-              placeholder={"Enter password"}
-              secureTextEntry={true}
-              keyboardType={"default"}
-              onChange={setEncryptPassword}
-            />
-            <View>
+      <View style={tw`bg-white h-full`}>
+        <View style={tw`bg-blue-700 px-5 pl-0 py-2`}>
+          <View style={tw`flex flex-row items-center justify-between`}>
+            <View style={tw`flex flex-row items-center`}>
               <TouchableOpacity
-                style={tw`w-full ${
-                  encryptPassword !== "" ? "bg-blue-600" : "bg-yellow-600"
-                } px-4 py-2 rounded`}
-                onPress={() => confirmEncryption(encrypted, encryptPassword)}
+                onPress={() => props.setSelectedUser(null)}
+                style={tw`flex flex-row pr-3 py-5 pl-5`}
               >
-                <Text style={tw`text-lg font-bold text-white`}>
-                  {encryptPassword !== "" ? "Done" : "Cancel"}
-                </Text>
+                <FontIcon name="arrow-left" size={30} color="#d1d1d1" />
               </TouchableOpacity>
+              {/* <FontIcon name="user-alt" size={30} color="#d1d1d1" /> */}
+              <View style={tw`ml-2`}>
+                <Text style={tw`text-white text-2xl font-bold`}>
+                  {props.selectedUser.username}
+                </Text>
+                <Text style={tw`text-blue-300 -mt-1`}>
+                  {props.selectedUser.fname} {props.selectedUser.lname}
+                </Text>
+              </View>
             </View>
+            <TouchableOpacity
+              style={tw`bg-blue-500 rounded-full p-2`}
+              onPress={() => setShowEncryptPassword(!showEncryptPassword)}
+            >
+              {encrypted === true ? (
+                <MaterialIcon name="no-encryption" size={30} color="#abbeff" />
+              ) : (
+                <MaterialIcon
+                  name="enhanced-encryption"
+                  size={30}
+                  color="#abbeff"
+                />
+              )}
+            </TouchableOpacity>
           </View>
         </View>
-      )}
-      <ScrollView
-        keyboardDismissMode="on-drag"
-        style={[tw`bg-white h-full px-4 py-4`, { flex: 1 }]}
-      >
-        {UserChatGroup === undefined ? (
-          <Text style={tw``}>No messages yet</Text>
-        ) : UserChatGroup.userChatText.length === 0 ? (
-          <Text style={tw``}>No messages yet</Text>
-        ) : (
-          props.user !== null &&
-          UserChatGroup.userChatText.map((item, i) => (
-            <View key={i + 1}>
-              {item.receiver === parseInt(props.user!.user_id) && (
-                <View style={tw`mb-3 mr-16`}>
-                  <View style={tw`flex flex-col items-start`}>
-                    {/* <FontIcon name="user-circle" size={30} color="#000" /> */}
-                    <View
-                      style={tw`bg-blue-200 px-3 py-1 rounded-r-xl rounded-t-xl`}
-                    >
-                      <Text style={tw`text-base font-bold text-gray-800`}>
-                        {encrypted === true
-                          ? decrypt_message(item.text_message)
-                          : item.text_message}
-                      </Text>
-                    </View>
-                    <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
-                      {getTime(item.date_sent)}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              {item.sender === parseInt(props.user!.user_id) && (
-                <View style={tw`mb-3 ml-16 flex items-end`}>
-                  <View style={tw`flex flex-col items-end`}>
-                    <View
-                      style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}
-                    >
-                      <Text style={tw`text-base font-bold text-white`}>
-                        {encrypted === true
-                          ? decrypt_message(item.text_message)
-                          : item.text_message}
-                      </Text>
-                    </View>
-                    <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
-                      {getTime(item.date_sent)}
-                    </Text>
-                  </View>
-                </View>
-              )}
+        {showEncryptPassword === true && (
+          <View style={tw`px-3 py-3`}>
+            <View
+              style={tw`bg-white flex flex-col items-end justify-end w-full p-3 border-2 border-blue-600 rounded shadow-xl`}
+            >
+              <InputText
+                value={encryptPassword}
+                placeholder={"Enter password"}
+                secureTextEntry={true}
+                keyboardType={"default"}
+                onChange={setEncryptPassword}
+              />
+              <View>
+                <TouchableOpacity
+                  style={tw`w-full ${
+                    encryptPassword !== "" ? "bg-blue-600" : "bg-yellow-600"
+                  } px-4 py-2 rounded`}
+                  onPress={() => confirmEncryption(encrypted, encryptPassword)}
+                >
+                  <Text style={tw`text-lg font-bold text-white`}>
+                    {encryptPassword !== "" ? "Done" : "Cancel"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          ))
+          </View>
         )}
-      </ScrollView>
-      <View
-        style={tw`bg-gray-200 px-2 py-2 flex flex-row items-center justify-between pb-4`}
-      >
-        <TextInput
-          multiline={true}
-          style={[
-            tw`border border-gray-300 rounded-full px-4 py-4 h-12 bg-white ml-3`,
-            { width: "80%" },
-          ]}
-          onChangeText={setChatMessage}
-          value={chatMessage}
-        />
-        <TouchableOpacity
-          onPress={() => {
-            if (chatMessage !== "" && chatMessage.length > 0) {
-              sendMessage();
-              setChatMessage("");
-            } else {
-              alert("Fill text");
-            }
-          }}
-          style={tw`bg-blue-600 px-2 py-2 rounded-full`}
-        >
-          <FontIcon name="paper-plane" size={26} color="#fff" />
-        </TouchableOpacity>
+        <View style={[tw`bg-white h-full`, { flex: 1, height: "100%" }]}>
+          <ScrollView
+            keyboardDismissMode="on-drag"
+            style={[tw`bg-white h-full px-4 py-4`, { flex: 1 }]}
+          >
+            {UserChatGroup === undefined ? (
+              <Text style={tw``}>No messages yet</Text>
+            ) : UserChatGroup.userChatText.length === 0 ? (
+              <Text style={tw``}>No messages yet</Text>
+            ) : (
+              props.user !== null &&
+              UserChatGroup.userChatText.map((item, i) => (
+                <View key={i + 1}>
+                  {item.receiver === parseInt(props.user!.user_id) && (
+                    <View style={tw`mb-3 mr-16`}>
+                      <View style={tw`flex flex-col items-start`}>
+                        {/* <FontIcon name="user-circle" size={30} color="#000" /> */}
+                        <View
+                          style={tw`bg-blue-200 px-3 py-1 rounded-r-xl rounded-t-xl`}
+                        >
+                          <Text style={tw`text-base font-bold text-gray-800`}>
+                            {encrypted === true
+                              ? decrypt_message(item.text_message)
+                              : item.text_message}
+                          </Text>
+                        </View>
+                        <Text style={tw`text-gray-500 font-semibold ml-2 mt-1`}>
+                          {getTime(item.date_sent)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                  {item.sender === parseInt(props.user!.user_id) && (
+                    <View style={tw`mb-3 ml-16 flex items-end`}>
+                      <View style={tw`flex flex-col items-end`}>
+                        <View
+                          style={tw`bg-blue-600 px-3 py-1 rounded-l-xl rounded-t-xl`}
+                        >
+                          <Text style={tw`text-base font-bold text-white`}>
+                            {encrypted === true
+                              ? decrypt_message(item.text_message)
+                              : item.text_message}
+                          </Text>
+                        </View>
+                        <Text style={tw`text-gray-600 font-semibold mr-2 mt-1`}>
+                          {getTime(item.date_sent)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
+            {props.loading === true && (
+              <View>
+                <Text style={tw`text-yellow-700 font-bold text-xl text-center`}>
+                  Loading...
+                </Text>
+              </View>
+            )}
+            <View style={tw`mb-20`}></View>
+          </ScrollView>
+          <View
+            style={tw`bg-gray-200 px-2 py-2 flex flex-row items-center justify-between pb-4`}
+          >
+            <TextInput
+              multiline={true}
+              style={[
+                tw`border border-gray-300 rounded-full px-4 py-4 h-12 bg-white ml-3`,
+                { width: "80%" },
+              ]}
+              onChangeText={setChatMessage}
+              value={chatMessage}
+            />
+            <TouchableOpacity
+              onPress={() => {
+                if (chatMessage !== "" && chatMessage.length > 0) {
+                  sendMessage();
+                  setChatMessage("");
+                } else {
+                  alert("Fill text");
+                }
+              }}
+              style={tw`bg-blue-600 px-2 py-2 rounded-full`}
+            >
+              <FontIcon name="paper-plane" size={26} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

@@ -15,7 +15,6 @@ import {
 } from "../../../actions";
 import { SOCKET_API } from "../../../utils/api";
 import { UserChats } from "../ChatScreen";
-import uuid from "react-native-uuid";
 
 interface FriendItemProps {
   user: userInterface;
@@ -25,10 +24,10 @@ interface FriendItemProps {
   onPress: (user: userInterface) => void;
   userChats: UserChats[];
   getUserChats: (headers: any) => void;
+  UserChatGroup: Function;
 }
 
 const _FriendItem = (props: FriendItemProps) => {
-  const default_uuid: string = uuid.v4().toString();
   let UserChatGroup = props.userChats.find(
     (itm) =>
       props.user !== null &&
@@ -43,7 +42,9 @@ const _FriendItem = (props: FriendItemProps) => {
     UserChatGroup: UserChats | undefined
   ) => {
     let chatRoomId =
-      UserChatGroup !== undefined ? UserChatGroup.chat_id : default_uuid;
+      UserChatGroup !== undefined
+        ? UserChatGroup.chat_id
+        : props.UserChatGroup();
     props.socket.socket.emit("joinRoom", { username, chatRoomId });
   };
 

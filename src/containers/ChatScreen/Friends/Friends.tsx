@@ -5,9 +5,9 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
-import OctIcon from "react-native-vector-icons/Octicons";
 import AntIcon from "react-native-vector-icons/AntDesign";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
 import EntypoIcon from "react-native-vector-icons/Entypo";
@@ -19,6 +19,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteParams } from "../../../components/Navigation/RootNavigator";
 import { UserChats } from "../ChatScreen";
+import { RunWithAuthentication } from "../../../actions/auth";
 
 export interface userInterface {
   fname: string;
@@ -37,13 +38,26 @@ interface FriendsProps {
   setSelectedUser: (user: userInterface) => void;
   userChats: UserChats[];
   getUserChats: (headers: any) => void;
+  UserChatGroup: Function;
+  getUsers: (headers: any) => void;
 }
 const Friends = (props: FriendsProps) => {
   const [displaySearch, setDisplaySearch] = useState<boolean>(false);
   const [displayMenus, setDisplayMenus] = useState<boolean>(false);
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const wait = (timeout: any) => {
+    return new Promise((resolve) => setTimeout(resolve, timeout));
+  };
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    RunWithAuthentication(props.getUsers);
+    RunWithAuthentication(props.getUserChats);
+    wait(2000).then(() => setRefreshing(false));
+  }, []);
   return (
-    <View>
+    <View style={tw`bg-white h-full`}>
       {displayMenus === true && (
         <Menus
           menus={[
@@ -62,7 +76,7 @@ const Friends = (props: FriendsProps) => {
           onClose={() => setDisplayMenus(false)}
         />
       )}
-      <View style={tw`bg-blue-700 px-5 py-4 pt-16`}>
+      <View style={tw`bg-blue-700 px-5 py-4`}>
         <View style={tw`flex flex-row items-center justify-between`}>
           <View style={tw`flex flex-row items-center`}>
             <View style={tw`mr-4`}>
@@ -102,24 +116,33 @@ const Friends = (props: FriendsProps) => {
           />
         </View>
       )}
-      <ScrollView style={[tw`bg-gray-100`, { height: "80%" }]}>
-        {props.loading === true ? (
-          <Text style={tw`text-2xl text-gray-500 text-center mt-10`}>
-            Loading, Please wait...
-          </Text>
-        ) : (
-          props.users.map((item, i) => (
-            <FriendItem
-              key={i + 1}
-              user={item}
-              messages={0}
-              onPress={(user: userInterface) => props.setSelectedUser(user)}
-              userChats={props.userChats}
-              getUserChats={props.getUserChats}
-            />
-          ))
-        )}
-      </ScrollView>
+      <View style={tw`bg-white h-full`}>
+        <ScrollView
+          contentContainerStyle={{ flex: 1 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          style={tw`bg-gray-100 h-full`}
+        >
+          {props.loading === true ? (
+            <Text style={tw`text-xl text-yellow-700 text-center mt-10`}>
+              Loading, Please wait...
+            </Text>
+          ) : (
+            props.users.map((item, i) => (
+              <FriendItem
+                key={i + 1}
+                user={item}
+                messages={0}
+                onPress={(user: userInterface) => props.setSelectedUser(user)}
+                userChats={props.userChats}
+                getUserChats={props.getUserChats}
+                UserChatGroup={props.UserChatGroup}
+              />
+            ))
+          )}
+        </ScrollView>
+      </View>
     </View>
   );
 };

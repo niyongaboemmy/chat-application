@@ -31,6 +31,13 @@ class HomeScreenContent extends Component<
     const { navigation } = this.props;
     return (
       <SafeAreaView style={tw`h-full bg-white`}>
+        <StatusBar
+          animated={true}
+          backgroundColor="#fff"
+          barStyle="dark-content"
+          showHideTransition="fade"
+          hidden={false}
+        />
         <ScrollView>
           <PublicHeader />
           <View style={tw`flex flex-row items-center justify-center mt-5 mb-5`}>
