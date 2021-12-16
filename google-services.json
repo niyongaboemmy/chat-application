@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "638047903271",
+    "project_id": "notify-chat-96c68",
+    "storage_bucket": "notify-chat-96c68.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:638047903271:android:44f18a0aa666385446b802",
+        "android_client_info": {
+          "package_name": "com.niyongabo.chatapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "638047903271-kvl1k17t9q92s8dpgo6l1mr361tcl37j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBe5wupVi2E1AvdLyOSOWcJ0TyuhUICu-E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "638047903271-kvl1k17t9q92s8dpgo6l1mr361tcl37j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -9,7 +9,11 @@ import {
 } from "react-native";
 import { connect } from "react-redux";
 import { StoreState } from "../../reducers";
-import { Auth, RunWithAuthentication } from "../../actions/auth";
+import {
+  Auth,
+  PushNotification,
+  RunWithAuthentication,
+} from "../../actions/auth";
 import { FC_Login, FC_Logout } from "../../actions";
 import Friends, { userInterface } from "./Friends/Friends";
 import ChatPage from "./ChatPage/ChatPage";
@@ -156,6 +160,12 @@ export class _ChatScreen extends Component<ChatScreenProps, ChatScreenState> {
     if (this.state.userChats.length === 0) {
       RunWithAuthentication(this.getUserChats);
     }
+    this.props.auth.user &&
+      PushNotification(
+        this.props.auth.user.user_id,
+        "Testing title",
+        "Testing message"
+      );
   };
   render() {
     return (

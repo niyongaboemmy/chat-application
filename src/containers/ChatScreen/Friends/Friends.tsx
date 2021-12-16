@@ -20,6 +20,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteParams } from "../../../components/Navigation/RootNavigator";
 import { UserChats } from "../ChatScreen";
 import { RunWithAuthentication } from "../../../actions/auth";
+import searchData from "../../../shared/search";
 
 export interface userInterface {
   fname: string;
@@ -46,6 +47,7 @@ const Friends = (props: FriendsProps) => {
   const [displayMenus, setDisplayMenus] = useState<boolean>(false);
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
   const [refreshing, setRefreshing] = React.useState(false);
+  const [search, setSearch] = useState("");
 
   const wait = (timeout: any) => {
     return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -109,8 +111,8 @@ const Friends = (props: FriendsProps) => {
         <View>
           <TextInput
             style={tw`px-6 pb-1 text-base flex flex-col justify-center h-12 border border-gray-200`}
-            value={""}
-            onChangeText={() => alert("")}
+            value={search}
+            onChangeText={setSearch}
             placeholder={"Search by names"}
             returnKeyType="next"
           />
@@ -128,8 +130,14 @@ const Friends = (props: FriendsProps) => {
             <Text style={tw`text-xl text-yellow-700 text-center mt-10`}>
               Loading, Please wait...
             </Text>
+          ) : searchData(props.users, search).length === 0 ? (
+            <View style={tw`px-6 py-6`}>
+              <Text style={tw`text-center text-yellow-800 text-lg font-bold`}>
+                No result found
+              </Text>
+            </View>
           ) : (
-            props.users.map((item, i) => (
+            searchData(props.users, search).map((item, i) => (
               <FriendItem
                 key={i + 1}
                 user={item}

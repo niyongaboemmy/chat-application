@@ -23,6 +23,32 @@ import { FC_Login } from "../../actions";
 import axios from "axios";
 import { API } from "../../utils/api";
 
+export const passwordChanged = (
+  pwd: string,
+  callback: (res: string) => void
+) => {
+  var strongRegex = new RegExp(
+    "^(?=.{14,})(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*\\W).*$",
+    "g"
+  );
+  var mediumRegex = new RegExp(
+    "^(?=.{10,})(((?=.*[A-Z])(?=.*[a-z]))|((?=.*[A-Z])(?=.*[0-9]))|((?=.*[a-z])(?=.*[0-9]))).*$",
+    "g"
+  );
+  var enoughRegex = new RegExp("(?=.{8,}).*", "g");
+  if (pwd.length == 0) {
+    callback("Type Password");
+  } else if (false == enoughRegex.test(pwd)) {
+    callback("More Characters");
+  } else if (strongRegex.test(pwd)) {
+    callback("Strong!");
+  } else if (mediumRegex.test(pwd)) {
+    callback("Medium!");
+  } else {
+    callback("Weak!");
+  }
+};
+
 interface LoginScreenContentProps {
   navigation: NativeStackNavigationProp<RouteParams>;
   route: RouteProp<RouteParams, keyof RouteParams>;
@@ -49,6 +75,7 @@ interface LoginScreenContentState {
     element: string;
     msg: string;
   } | null;
+  passwordStatus: string;
 }
 
 export class _LoginScreenContent extends Component<
@@ -63,6 +90,7 @@ export class _LoginScreenContent extends Component<
       username: "",
       password: "",
       formError: null,
+      passwordStatus: "",
     };
     this.Login = this.Login.bind(this);
   }
@@ -77,13 +105,18 @@ export class _LoginScreenContent extends Component<
     state === false && alert("Message: " + feedback.msg);
   };
   setUsername = (username: string) => {
-    this.setState({ username: username });
+    this.setState({ username: username, formError: null });
+  };
+  setPasswordState = (passwordStat: string) => {
+    this.setState({ passwordStatus: passwordStat });
   };
   setPassword = (password: string) => {
-    this.setState({ password: password });
+    passwordChanged(password, this.setPasswordState);
+    this.setState({ password: password, formError: null });
   };
 
   Login = async () => {
+    this.setState({ formError: null });
     if (this.state.username === "") {
       return this.setState({
         formError: {
@@ -150,6 +183,11 @@ export class _LoginScreenContent extends Component<
                     placeholder="Fill username"
                     secureTextEntry={false}
                     onChange={this.setUsername}
+                    styles={
+                      this.state.formError?.element === "username"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "username" && (
@@ -167,6 +205,11 @@ export class _LoginScreenContent extends Component<
                     placeholder="Fill password"
                     secureTextEntry={true}
                     onChange={this.setPassword}
+                    styles={
+                      this.state.formError?.element === "password"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "password" && (
@@ -174,6 +217,17 @@ export class _LoginScreenContent extends Component<
                         {this.state.formError.msg}
                       </Text>
                     )}
+                  {this.state.passwordStatus !== "" && (
+                    <Text
+                      style={tw`text-sm text-center ${
+                        this.state.passwordStatus === "Strong!"
+                          ? "text-green-600 font-bold"
+                          : "text-yellow-600 font-bold"
+                      } -mt-2`}
+                    >
+                      Password status: {this.state.passwordStatus}
+                    </Text>
+                  )}
                 </View>
               </View>
               <View

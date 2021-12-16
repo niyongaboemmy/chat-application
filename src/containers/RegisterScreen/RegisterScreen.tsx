@@ -24,6 +24,7 @@ import axios from "axios";
 import { API } from "../../utils/api";
 import { errorToText } from "../../utils/errors";
 import uuid from "react-native-uuid";
+import { passwordChanged } from "../LoginScreen/LoginScreen";
 
 export enum UserCategoryInterface {
   Normal = 2,
@@ -59,6 +60,7 @@ interface RegisterScreenContentState {
     element: string;
     msg: string;
   } | null;
+  passwordStatus: string;
 }
 
 export class _RegisterScreenContent extends Component<
@@ -76,6 +78,7 @@ export class _RegisterScreenContent extends Component<
       password: "",
       confirm_password: "",
       formError: null,
+      passwordStatus: "",
     };
     this.Register = this.Register.bind(this);
   }
@@ -90,22 +93,28 @@ export class _RegisterScreenContent extends Component<
     state === false && alert("Message: " + feedback.msg);
   };
   setFirstName = (first_name: string) => {
-    this.setState({ first_name: first_name });
+    this.setState({ first_name: first_name, formError: null });
   };
   setLastName = (last_name: string) => {
-    this.setState({ last_name: last_name });
+    this.setState({ last_name: last_name, formError: null });
   };
   setUsername = (username: string) => {
-    this.setState({ username: username });
+    this.setState({ username: username, formError: null });
+  };
+  setPasswordState = (passwordStat: string) => {
+    this.setState({ passwordStatus: passwordStat });
   };
   setPassword = (password: string) => {
-    this.setState({ password: password });
+    passwordChanged(password, this.setPasswordState);
+    this.setState({ password: password, formError: null });
   };
   setConfirmPassword = (confirm_password: string) => {
-    this.setState({ confirm_password: confirm_password });
+    this.setState({ confirm_password: confirm_password, formError: null });
   };
 
   Register = async () => {
+    passwordChanged(this.state.password, this.setPasswordState);
+    this.setState({ formError: null });
     if (this.state.first_name === "") {
       return this.setState({
         formError: {
@@ -135,6 +144,14 @@ export class _RegisterScreenContent extends Component<
         formError: {
           element: "password",
           msg: "Please fill password",
+        },
+      });
+    }
+    if (this.state.passwordStatus !== "Strong!") {
+      return this.setState({
+        formError: {
+          element: "password",
+          msg: "Your password is not strong!",
         },
       });
     }
@@ -195,7 +212,7 @@ export class _RegisterScreenContent extends Component<
             hidden={false}
           />
           <ScrollView>
-            <PublicHeader />
+            {/* <PublicHeader /> */}
             <View style={tw`px-4`}>
               <View
                 style={tw`flex flex-row items-center justify-center mt-5 mb-2`}
@@ -218,6 +235,11 @@ export class _RegisterScreenContent extends Component<
                     placeholder="Fill first name"
                     secureTextEntry={false}
                     onChange={this.setFirstName}
+                    styles={
+                      this.state.formError?.element === "first_name"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "first_name" && (
@@ -235,6 +257,11 @@ export class _RegisterScreenContent extends Component<
                     placeholder="Fill Last name"
                     secureTextEntry={false}
                     onChange={this.setLastName}
+                    styles={
+                      this.state.formError?.element === "last_name"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "last_name" && (
@@ -252,6 +279,11 @@ export class _RegisterScreenContent extends Component<
                     placeholder="Fill username"
                     secureTextEntry={false}
                     onChange={this.setUsername}
+                    styles={
+                      this.state.formError?.element === "username"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "username" && (
@@ -269,6 +301,11 @@ export class _RegisterScreenContent extends Component<
                     placeholder="Fill password"
                     secureTextEntry={true}
                     onChange={this.setPassword}
+                    styles={
+                      this.state.formError?.element === "password"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "password" && (
@@ -276,6 +313,29 @@ export class _RegisterScreenContent extends Component<
                         {this.state.formError.msg}
                       </Text>
                     )}
+                  <View style={tw`mb-2 py-2 px-2 bg-yellow-100`}>
+                    <Text
+                      style={tw`text-base font-bold text-blue-600 text-center`}
+                    >
+                      Strong password need at least: 14 characters, 1 Capital, 1
+                      Special character and Containing numbers
+                    </Text>
+                  </View>
+                  {this.state.passwordStatus !== "" && (
+                    <View>
+                      <Text
+                        style={tw`text-sm text-center text-lg ${
+                          this.state.passwordStatus === "Strong!"
+                            ? "text-green-600 font-bold"
+                            : this.state.passwordStatus === "Medium!"
+                            ? "text-gray-600 font-bold underline"
+                            : "text-yellow-600 font-bold underline"
+                        } -mt-2`}
+                      >
+                        Password status: {this.state.passwordStatus}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <View style={tw`my-4`}>
                   <Text style={tw`text-base font-bold text-gray-600`}>
@@ -286,6 +346,11 @@ export class _RegisterScreenContent extends Component<
                     placeholder="Fill confirm password"
                     secureTextEntry={true}
                     onChange={this.setConfirmPassword}
+                    styles={
+                      this.state.formError?.element === "confirm_password"
+                        ? "border-2 border-red-600"
+                        : ""
+                    }
                   />
                   {this.state.formError !== null &&
                     this.state.formError.element === "confirm_password" && (

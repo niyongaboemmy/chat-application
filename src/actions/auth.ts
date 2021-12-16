@@ -1,3 +1,6 @@
+import { Platform } from "react-native";
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 // import axios from "axios";
 import axios from "axios";
 import { Dispatch } from "redux";
@@ -96,6 +99,24 @@ export const FC_Login = (
     });
     try {
       const res = await axios.post<UserLoginDetails>(`${API}/auth/login`, data);
+      // Native Notify API Code
+      if (Constants.isDevice && Platform.OS !== "web") {
+        let token = (await Notifications.getExpoPushTokenAsync()).data;
+        if (token) {
+          axios.post(`https://nativenotify.com/api/indie/push/id`, {
+            subID: res.data.data.user_id,
+            appId: 4,
+            appToken: "rZh2qwW01JH64sNbz52uiL",
+            expoToken: token,
+          });
+        } else {
+          console.log("Your token does not have a value.");
+          console.log(
+            "Please, review the setup instructions carefully to make sure you followed every step."
+          );
+        }
+      }
+      // End of Native Notify Code
       AsyncStorage.setItem(APP_TOKEN_NAME, res.data.token);
       dispatch<LoginSuccessDetails>({
         type: ActionTypes.USER_LOGIN_SUCCESS_DATA,
@@ -152,6 +173,24 @@ export const FC_CheckLoggedIn = () => {
         headers: headers,
       });
       console.log("my: ", res.data);
+      // Native Notify API Code
+      if (Constants.isDevice && Platform.OS !== "web") {
+        let token = (await Notifications.getExpoPushTokenAsync()).data;
+        if (token) {
+          axios.post(`https://nativenotify.com/api/indie/push/id`, {
+            subID: res.data.user_id,
+            appId: 4,
+            appToken: "rZh2qwW01JH64sNbz52uiL",
+            expoToken: token,
+          });
+        } else {
+          console.log("Your token does not have a value.");
+          console.log(
+            "Please, review the setup instructions carefully to make sure you followed every step."
+          );
+        }
+      }
+      // End of Native Notify Code
       dispatch<LoginSuccessDetails>({
         type: ActionTypes.USER_LOGIN_SUCCESS_DATA,
         payload: {
@@ -168,6 +207,20 @@ export const FC_CheckLoggedIn = () => {
       });
     }
   };
+};
+
+export const PushNotification = async (
+  user_id: string,
+  title: string,
+  message: string
+) => {
+  await axios.post(`https://nativenotify.com/api/indie/notification`, {
+    subID: user_id,
+    appId: 4,
+    appToken: "rZh2qwW01JH64sNbz52uiL",
+    title: title,
+    message: message,
+  });
 };
 
 export const FC_Logout = () => {
